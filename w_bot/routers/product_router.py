@@ -66,9 +66,7 @@ async def handle_artikul(message: types.Message, bot: Bot, state: FSMContext):
         'Authorization': f'Bearer {BEARER_TOKEN}',  # Используем Bearer токен
         'Content-Type': 'application/json'
     }
-    # Формируем тело запроса
-    body = {"artikul": int(artikul)}
-    await bot.send_message(message.from_user.id, f"Отправляем запрос:\nURL: {API_URL}/api/v1/products\nТело запроса: {body}\nЗаголовки: {headers}")
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(f"{API_URL}/api/v1/products", json={"artikul": int(artikul)}, headers=headers) as response:

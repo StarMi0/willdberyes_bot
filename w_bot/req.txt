@@ -1,1 +1,4 @@
 aiogram
+requests
+apscheduler
+python-dotenv

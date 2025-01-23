@@ -1,17 +1,24 @@
-from aiogram.client.session import aiohttp
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
-from contextlib import asynccontextmanager
+import aiohttp
+from fastapi import FastAPI, Depends, HTTPException
 import requests
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
+from contextlib import asynccontextmanager
 
 from db.requests import add_product, get_product_by_artikul
-
 from func.auth import verify_token
-from db.model import AsyncSessionLocal
+from db.model import AsyncSessionLocal, init_db
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Initializing database...")
+    await init_db()
+    print("Database initialized successfully!")
+    yield
+    print("Shutting down application...")
 
 # Инициализация приложения FastAPI
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # Валидатор для POST запроса
 class ProductRequest(BaseModel):
@@ -96,10 +103,12 @@ async def create_or_update_product(
         raise HTTPException(status_code=500, detail=f"Failed to fetch or store product data: {str(e)}")
 
 
-# Функция для периодического сбора данных
-async def periodic_fetch(artikul: int):
-    async with AsyncSessionLocal() as db_session:
-        await fetch_and_store_product(artikul, db_session)
+# Инициализация базы данных перед запуском приложения
+@app.on_event("startup")
+async def on_startup():
+    print("Initializing database...")
+    await init_db()
+    print("Database initialized successfully!")
 
 
 if __name__ == "__main__":

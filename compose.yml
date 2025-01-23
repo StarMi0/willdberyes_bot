@@ -3,27 +3,52 @@ services:
     image: postgres:13
     container_name: postgres_db
     environment:
+      POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+
     ports:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - app_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: ["bash", "-c", "env && docker-entrypoint.sh postgres"]
 
-  app:
-    image: your-app-image # Замените на имя вашего контейнера
-    container_name: your_app
+  api:
+    build:
+      context: ./api_app
+    container_name: wb_api
     environment:
-      DB_HOST: ${POSTGRES_HOST}
-      DB_USER: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_NAME: ${POSTGRES_DB}
-      DB_PORT: ${POSTGRES_PORT}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      BEARER_TOKEN: ${BEARER_TOKEN}
+    ports:
+      - "8000:8000"
     depends_on:
       - db
+    networks:
+      - app_network
+
+  bot:
+    build:
+      context: ./w_bot
+    container_name: wb_bot
+    environment:
+      API_TOKEN: ${API_TOKEN}
+      API_URL: ${API_URL}
+      BEARER_TOKEN: ${BEARER_TOKEN}
+    depends_on:
+      - db
+      - api
     networks:
       - app_network
 
