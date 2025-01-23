@@ -32,7 +32,7 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
       BEARER_TOKEN: ${BEARER_TOKEN}
     ports:
-      - "8000:8000"
+      - "8801:8000"
     depends_on:
       - db
     networks:
